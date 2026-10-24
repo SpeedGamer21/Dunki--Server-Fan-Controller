@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0d0d0e">
+  <title>Fan Control Center</title>
+  <!-- Resolve the theme before first paint so the page doesn't flash. Keep the list in sync with THEMES in app.js. -->
+  <script>
+    try {
+      var t = localStorage.getItem("fanTheme");
+      document.documentElement.dataset.theme = ["redline", "amber", "nitro", "daylight", "typer"].indexOf(t) >= 0 ? t
+        : matchMedia("(prefers-color-scheme: light)").matches ? "daylight" : "redline";
+    } catch (e) {}
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%230d0d0e' stroke='%23ef233c' stroke-width='2'/%3E%3Cpath fill='%23ef233c' d='M12 3c2.5 0 3 3.5 1.2 7.2L12 12 10.8 10.2C9 6.5 9.5 3 12 3Zm9 9c0 2.5-3.5 3-7.2 1.2L12 12l1.8-1.2C17.5 9 21 9.5 21 12Zm-9 9c-2.5 0-3-3.5-1.2-7.2L12 12l1.2 1.8C15 17.5 14.5 21 12 21Zm-9-9c0-2.5 3.5-3 7.2-1.2L12 12l-1.8 1.2C6.5 15 3 14.5 3 12Z'/%3E%3C/svg%3E">
+  <!-- Display fonts; the page falls back to system fonts if the browser has no internet access -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Rajdhani:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Shared SVG defs. The fan glyph is colored through inherited --blade / --hub / --hub-ring
+       custom properties because document CSS selectors don't match inside <use> clones. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f4f4f5"/>
+        <stop offset=".42" stop-color="#71717a"/>
+        <stop offset=".55" stop-color="#27272a"/>
+        <stop offset=".8" stop-color="#a1a1aa"/>
+        <stop offset="1" stop-color="#e4e4e7"/>
+      </linearGradient>
+      <radialGradient id="face-shade">
+        <stop offset=".62" stop-color="#000" stop-opacity="0"/>
+        <stop offset="1" stop-color="#000" class="face-shade-edge"/>
+      </radialGradient>
+    </defs>
+    <symbol id="fan-glyph" viewBox="-50 -50 100 100">
+      <g style="fill:var(--blade,#52525b)">
+        <path d="M0-44c14 0 17 19 7 39L0 0-7-5C-17-25-14-44 0-44Z"/>
+        <path d="M0-44c14 0 17 19 7 39L0 0-7-5C-17-25-14-44 0-44Z" transform="rotate(90)"/>
+        <path d="M0-44c14 0 17 19 7 39L0 0-7-5C-17-25-14-44 0-44Z" transform="rotate(180)"/>
+        <path d="M0-44c14 0 17 19 7 39L0 0-7-5C-17-25-14-44 0-44Z" transform="rotate(270)"/>
+      </g>
+      <circle r="10" style="fill:var(--hub,#a1a1aa);stroke:var(--hub-ring,#0d0d0e);stroke-width:5"/>
+    </symbol>
+  </svg>
+
+  <main class="app">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg class="spin-slow" viewBox="-50 -50 100 100"><use href="#fan-glyph" x="-50" y="-50" width="100" height="100"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow"><span class="flag" aria-hidden="true"></span>ESP8266 · PWM → Voltage · 12&nbsp;V</p>
+          <h1>Fan Control <span>Center</span></h1>
+          <p class="subtitle">ESP8266 PWM drives a PWM-to-voltage module for 2-pin, non-PWM 12&nbsp;V fans.</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <div class="lamps" aria-label="Status lamps">
+          <span id="connectionBadge" class="lamp bad" role="status" aria-live="polite">Offline</span>
+          <span id="tempLamp" class="lamp" title="On when temperature reaches the warning threshold">Temp</span>
+          <span id="kickLamp" class="lamp" title="On while a fan is getting its 100% startup kick">Kick</span>
+          <span id="vtecLamp" class="lamp vtec-only" title="Type R theme only: on when any fan is above 70%">VTEC</span>
+        </div>
+        <label class="theme-picker" title="Theme">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1.1.2-2.2 1.4-2.2H17a4 4 0 0 0 4-4c0-5-4-10-9-10Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7" r="1"/><circle cx="15.5" cy="8" r="1"/></svg>
+          <span class="visually-hidden">Theme</span>
+          <select id="themeSelect">
+            <option value="">Auto</option>
+            <option value="redline">Redline</option>
+            <option value="amber">Amber dash</option>
+            <option value="nitro">Nitro</option>
+            <option value="daylight">Daylight</option>
+            <option value="typer">Type R</option>
+          </select>
+        </label>
+        <button id="refresh" type="button" class="ghost">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg>
+          Refresh
+        </button>
+        <small id="lastUpdated" class="muted">Never updated</small>
+      </div>
+    </header>
+
+    <section class="stats" aria-label="Device status">
+      <article class="stat primary" style="--i:0">
+        <span class="stat-label"><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0ZM10 9h4"/></svg>Temperature</span>
+        <div class="stat-row">
+          <div class="lcd">
+            <strong id="temp" class="stat-value">-- °C</strong>
+            <small id="humidity">Humidity --%</small>
+          </div>
+          <!-- pathLength=100 lets JS set the fill as a percentage -->
+          <svg class="gauge" viewBox="0 0 100 64" aria-hidden="true">
+            <path class="gauge-track" d="M10 52A40 40 0 0 1 90 52" pathLength="100"/>
+            <path id="gaugeFill" class="gauge-fill" d="M10 52A40 40 0 0 1 90 52" pathLength="100"/>
+            <line id="gaugeTick" class="gauge-tick" x1="50" y1="5" x2="50" y2="19"/>
+            <text class="gauge-cap" x="10" y="64">C</text>
+            <text class="gauge-cap hot" x="90" y="64">H</text>
+          </svg>
+        </div>
+      </article>
+      <article class="stat" style="--i:1">
+        <span class="stat-label"><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>Device</span>
+        <div class="lcd">
+          <strong id="ip" class="stat-value">--</strong>
+          <small id="uptime">Uptime --</small>
+        </div>
+      </article>
+      <article class="stat" style="--i:2">
+        <span class="stat-label"><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M12 20h.01"/></svg>WiFi</span>
+        <div class="lcd">
+          <strong id="wifiState" class="stat-value">Disconnected</strong>
+          <small><span id="rssiBars" class="bars" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="rssi">RSSI -- dBm</span></small>
+        </div>
+      </article>
+      <article class="stat" style="--i:3">
+        <span class="stat-label"><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M12 14l4-4M3.3 19a10 10 0 1 1 17.4 0"/></svg>Controller</span>
+        <div class="lcd">
+          <strong id="mode" class="stat-value">PWM → V</strong>
+          <small id="pwmFreq">PWM -- Hz</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="overview" aria-label="Fan status overview">
+      <div id="fanOverview" class="mini-fans"></div>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="Fan controller sections">
+      <button type="button" class="tab active" role="tab" id="tabbtn-controls" aria-controls="tab-controls" aria-selected="true" data-tab="controls">Gauges</button>
+      <button type="button" class="tab" role="tab" id="tabbtn-curves" aria-controls="tab-curves" aria-selected="false" tabindex="-1" data-tab="curves">Fan curves</button>
+      <button type="button" class="tab" role="tab" id="tabbtn-settings" aria-controls="tab-settings" aria-selected="false" tabindex="-1" data-tab="settings">Settings</button>
+      <button type="button" class="tab" role="tab" id="tabbtn-logs" aria-controls="tab-logs" aria-selected="false" tabindex="-1" data-tab="logs">Logs</button>
+    </nav>
+
+    <section id="tab-controls" class="panel" role="tabpanel" aria-labelledby="tabbtn-controls">
+      <div class="section-head">
+        <div>
+          <h2>Instrument cluster</h2>
+          <p>Each needle shows the PWM output sent to the PWM-to-voltage module. The yellow marker is the curve's target speed, and the red zone starts at 85%. Hit START/STOP to switch a fan on or off.</p>
+        </div>
+      </div>
+      <div id="fans" class="fan-grid"></div>
+    </section>
+
+    <section id="tab-curves" class="panel" role="tabpanel" aria-labelledby="tabbtn-curves" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Fan curve tune</h2>
+          <p>Drag the points to tune the map. X = temperature °C, Y = PWM command %. The dashed line marks the current temperature.</p>
+        </div>
+        <label class="switch-line">
+          <input id="useGlobal" type="checkbox" class="switch-input">
+          <span class="switch-track" aria-hidden="true"></span>
+          <span>Use one global curve for all fans</span>
+        </label>
+      </div>
+
+      <div class="toolbar">
+        <label class="field compact">Curve target
+          <select id="fanSelect">
+            <option value="global">Global curve</option>
+          </select>
+        </label>
+        <div class="button-row">
+          <span id="dirtyNote" class="dirty" hidden>Unsaved changes</span>
+          <button id="resetCurve" type="button" class="ghost">Reset to default</button>
+          <button id="saveCurve" type="button">Save curves</button>
+        </div>
+      </div>
+
+      <div class="graph-wrap">
+        <canvas id="curve" aria-label="Fan curve editor: drag points to change temperature and speed"></canvas>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="panel" role="tabpanel" aria-labelledby="tabbtn-settings" hidden>
+      <div class="settings-grid">
+        <article class="card">
+          <h2><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>Connection</h2>
+          <label class="field">ESP8266 API base URL
+            <input id="apiBase" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://192.168.1.123">
+          </label>
+          <div class="button-row">
+            <button id="saveApi" type="button">Save &amp; connect</button>
+            <button id="testApi" type="button" class="ghost">Test URL</button>
+          </div>
+          <p id="statusText" class="note" aria-live="polite">Enter your ESP8266 IP address, then save.</p>
+        </article>
+
+        <article class="card">
+          <h2><svg viewBox="0 0 24 24" class="icon" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Alerts</h2>
+          <label class="field">Temperature warning threshold (°C)
+            <input id="warningTemp" type="number" step="1" min="0" max="100" inputmode="numeric">
+          </label>
+          <label class="field">Webhook URL
+            <input id="webhookUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="http://example.local/webhook">
+          </label>
+          <div class="button-row">
+            <button id="saveSettings" type="button">Save alert settings</button>
+            <button id="clearWebhook" type="button" class="ghost danger-text" hidden>Remove webhook</button>
+          </div>
+          <p id="webhookNote" class="note">The ESP8266 POSTs JSON to this URL when the temperature reaches the threshold. Plain <code>http://</code> only: the firmware has no TLS client.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-logs" class="panel" role="tabpanel" aria-labelledby="tabbtn-logs" hidden>
+      <div class="section-head">
+        <div>
+          <h2>Data log</h2>
+          <p>Browser-side API events, newest first. ESP8266 debug output stays in the Arduino Serial Monitor at 115200 baud.</p>
+        </div>
+        <button id="clearLogs" type="button" class="ghost">Clear logs</button>
+      </div>
+      <div id="log" class="log" role="log" tabindex="0"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

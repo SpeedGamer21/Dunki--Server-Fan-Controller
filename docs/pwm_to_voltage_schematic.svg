@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="940" viewBox="0 0 1400 940">
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.title{font:700 34px Arial,Helvetica,sans-serif;fill:#0f172a}.subtitle{font:18px Arial,Helvetica,sans-serif;fill:#475569}
+      .label{font:700 18px Arial,Helvetica,sans-serif;fill:#0f172a}.txt{font:16px Arial,Helvetica,sans-serif;fill:#0f172a}.small{font:14px Arial,Helvetica,sans-serif;fill:#334155}
+      .box{fill:#fff;stroke:#0f172a;stroke-width:2}.soft{fill:#e2e8f0;stroke:#334155;stroke-width:1.5}.note{fill:#eff6ff;stroke:#2563eb;stroke-width:2}.warn{fill:#fef2f2;stroke:#dc2626;stroke-width:2}
+      .wire{fill:none;stroke:#0f172a;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.red{stroke:#dc2626}.blue{stroke:#2563eb}.green{stroke:#16a34a}.orange{stroke:#f97316}.dash{stroke-dasharray:9 7}
+      .pin{fill:#0f172a}
+    </style>
+  </defs>
+  <rect class="bg" width="1400" height="940"/>
+  <text x="50" y="55" class="title">ESP8266 PWM-to-Voltage 12V Fan Controller Wiring</text>
+  <text x="50" y="88" class="subtitle">ESP8266 PWM signal drives a PWM-to-voltage module; the module powers the 2-pin non-PWM 12V fan.</text>
+
+  <rect x="55" y="145" width="330" height="585" rx="24" class="box"/>
+  <text x="115" y="185" class="label">ESP8266 NodeMCU / D1 Mini</text>
+  <text x="115" y="215" class="small">3.3V GPIO PWM output</text>
+  <circle cx="85" cy="265" r="5" class="pin"/><text x="105" y="271" class="txt">3V3 → DHT11 VCC</text>
+  <circle cx="85" cy="315" r="5" class="pin"/><text x="105" y="321" class="txt">GND → common ground</text>
+  <circle cx="85" cy="385" r="5" class="pin"/><text x="105" y="391" class="txt">D4 / GPIO2 → DHT11 DATA</text>
+  <circle cx="85" cy="480" r="5" class="pin"/><text x="105" y="486" class="txt">D1 / GPIO5 → Fan 1 PWM input</text>
+  <circle cx="85" cy="520" r="5" class="pin"/><text x="105" y="526" class="txt">D2 / GPIO4 → Fan 2 PWM input</text>
+  <circle cx="85" cy="560" r="5" class="pin"/><text x="105" y="566" class="txt">D5 / GPIO14 → Fan 3 PWM input</text>
+  <circle cx="85" cy="600" r="5" class="pin"/><text x="105" y="606" class="txt">D6 / GPIO12 → Fan 4 PWM input</text>
+
+  <rect x="500" y="145" width="220" height="150" rx="18" class="box"/>
+  <text x="575" y="180" class="label">DHT11</text>
+  <text x="535" y="218" class="txt">VCC → 3V3</text>
+  <text x="535" y="248" class="txt">DATA → D4</text>
+  <text x="535" y="278" class="txt">GND → GND</text>
+  <path d="M85 265 C250 245, 365 205, 500 205" class="wire red"/>
+  <path d="M85 385 C250 390, 360 245, 500 245" class="wire green"/>
+  <path d="M85 315 C250 335, 370 275, 500 275" class="wire blue"/>
+
+  <rect x="940" y="130" width="290" height="135" rx="20" class="box"/>
+  <text x="998" y="170" class="label">External 12V PSU</text>
+  <text x="985" y="210" class="txt">+12V → module VIN+</text>
+  <text x="985" y="240" class="txt">GND → module VIN- / GND</text>
+
+  <rect x="530" y="370" width="430" height="250" rx="22" class="box"/>
+  <text x="600" y="410" class="label">PWM-to-Voltage Module</text>
+  <text x="570" y="455" class="txt">PWM IN / SIG ← ESP8266 GPIO PWM</text>
+  <text x="570" y="492" class="txt">GND ← ESP8266 GND / PSU GND</text>
+  <text x="570" y="529" class="txt">VIN+ ← +12V PSU</text>
+  <text x="570" y="566" class="txt">VOUT+ / VOUT- → 12V fan</text>
+
+  <rect x="1070" y="415" width="210" height="120" rx="18" class="soft"/>
+  <text x="1130" y="460" class="label">12V Fan</text>
+  <text x="1105" y="495" class="small">2-wire non-PWM fan</text>
+
+  <path d="M85 480 C260 505, 395 455, 530 455" class="wire green"/>
+  <text x="245" y="445" class="small">Fan 1 PWM control signal</text>
+  <path d="M85 315 C260 675, 440 492, 530 492" class="wire blue"/>
+  <path d="M940 195 C875 240, 835 320, 790 370" class="wire red"/>
+  <path d="M1020 265 C930 330, 810 330, 730 370" class="wire blue"/>
+  <path d="M960 530 C990 520, 1015 485, 1070 470" class="wire red"/>
+  <path d="M960 565 C1000 590, 1035 525, 1070 505" class="wire blue"/>
+
+  <path d="M85 315 C360 830, 735 865, 1110 865" class="wire blue dash"/>
+  <text x="420" y="890" class="label">Common ground is required unless your module documentation specifically says it is isolated.</text>
+
+  <rect x="530" y="660" width="660" height="110" rx="16" class="note"/>
+  <text x="555" y="695" class="label">For multiple fans</text>
+  <text x="555" y="725" class="txt">Use one PWM-to-voltage channel/module per independently controlled fan.</text>
+  <text x="555" y="752" class="small">Fan 1: D1/GPIO5 · Fan 2: D2/GPIO4 · Fan 3: D5/GPIO14 · Fan 4: D6/GPIO12</text>
+
+  <rect x="55" y="765" width="390" height="115" rx="16" class="warn"/>
+  <text x="80" y="798" class="label">Important</text>
+  <text x="80" y="828" class="txt">Never connect 12V to ESP8266 GPIO.</text>
+  <text x="80" y="854" class="txt">Check module PWM input voltage support.</text>
+</svg>
