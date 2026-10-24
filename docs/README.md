@@ -39,7 +39,92 @@ The web UI still shows speed as percent, but in this version it means the PWM co
 6. Upload to ESP8266.
 7. Open Serial Monitor at 115200 baud.
 8. Copy the ESP8266 IP address.
-9. Host the `web` folder on nginx and enter the ESP8266 API URL.
+9. Host the `web` folder on a web server (see [Deploying the web UI](#deploying-the-web-ui)) and enter the ESP8266 API URL.
+
+## Deploying the web UI
+
+The dashboard is three static files (`index.html`, `style.css`, `app.js`). The ESP8266 serves only the JSON API (`/api/status`, `/api/config`, `/api/fan`). The dashboard runs in your browser and calls that API directly, so you can host it on any static web server on your network. The steps below use nginx on a Raspberry Pi or another Debian/Ubuntu machine.
+
+Before you start:
+
+- The browser showing the dashboard must be able to reach the ESP8266 on your LAN.
+- Serve the dashboard over plain **HTTP**. The ESP8266 API is `http://`, and browsers block `http://` requests from an `https://` page (mixed content). If you need HTTPS, use the [reverse proxy](#optional-proxy-the-api-through-nginx) option.
+- The fonts load from Google Fonts. Without internet access the page still works but falls back to system fonts.
+
+### Option 1: nginx (recommended)
+
+1. Install nginx:
+   ```bash
+   sudo apt update
+   sudo apt install nginx
+   ```
+2. Copy the web files into the default web root:
+   ```bash
+   sudo mkdir -p /var/www/html/fan-controller
+   sudo cp web/index.html web/style.css web/app.js /var/www/html/fan-controller/
+   ```
+3. Open `http://<server-ip>/fan-controller/` in a browser.
+
+   The stock nginx site already serves `/var/www/html`, so no config change is needed. To give the dashboard its own server block instead, use `docs/nginx-example.conf`:
+   ```bash
+   sudo cp docs/nginx-example.conf /etc/nginx/sites-available/fan-controller
+   sudo nano /etc/nginx/sites-available/fan-controller   # set server_name to your server's IP or hostname
+   sudo ln -s /etc/nginx/sites-available/fan-controller /etc/nginx/sites-enabled/
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+### Option 2: quick test without nginx
+
+From the `web` folder, run any static server, for example:
+
+```bash
+cd web
+python3 -m http.server 8080
+```
+
+Then open `http://localhost:8080`. Opening `index.html` straight from disk also works for a quick check.
+
+### Connect the dashboard to the ESP8266
+
+1. Open the dashboard. On first load it opens on the **Settings** tab.
+2. Under **Connection**, enter the ESP8266 address from the Serial Monitor, e.g. `http://192.168.1.123` (`http://` is added automatically if you leave it off).
+3. Click **Test URL** to check it, then **Save & connect**. The **ONLINE** lamp lights up and the gauges start updating every 5 seconds.
+
+The URL is saved in your browser's localStorage, so each browser or device needs to enter it once. Give the ESP8266 a DHCP reservation on your router so its IP doesn't change.
+
+### Updating the dashboard
+
+Copy the changed files over the old ones:
+
+```bash
+sudo cp web/index.html web/style.css web/app.js /var/www/html/fan-controller/
+```
+
+Then hard-refresh the browser (Ctrl+F5 or Cmd+Shift+R) so it doesn't keep cached copies.
+
+### Optional: proxy the API through nginx
+
+nginx can forward API calls to the ESP8266, so the browser only ever talks to the nginx server. This makes HTTPS possible and avoids cross-origin requests. Add this inside your `server { ... }` block, replacing the IP with your ESP8266's:
+
+```nginx
+location /fan-controller/api/ {
+    proxy_pass http://192.168.1.123/api/;
+    proxy_connect_timeout 5s;
+    proxy_read_timeout 10s;
+}
+```
+
+Reload nginx, then set the dashboard's API URL to the nginx address including the path, e.g. `http://<server-ip>/fan-controller` (or `https://...` if nginx has TLS).
+
+### Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| **OFFLINE** lamp, log says "Network error" | Is the ESP8266 IP right? Try `curl http://<esp-ip>/api/status` from the server, or open that URL in the browser. |
+| Works on `http://`, fails on `https://` | Mixed content. Serve the dashboard over HTTP or use the nginx proxy above. |
+| "Timed out after 4s" | The ESP8266 is busy or has weak WiFi. Check the RSSI on the WiFi card and the Serial Monitor. |
+| Old look after updating files | The browser cached the old files. Hard-refresh (Ctrl+F5). |
+| 404 from nginx | Check that the files are in `/var/www/html/fan-controller/` and the URL ends with `/fan-controller/`. |
 
 ## Default pins
 
