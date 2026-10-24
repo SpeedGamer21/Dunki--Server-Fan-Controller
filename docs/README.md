@@ -13,6 +13,26 @@ PWM-to-voltage module output → 12V 2-pin fan
 
 The web UI still shows speed as percent, but in this version it means the PWM command sent to the PWM-to-voltage module.
 
+## Screenshots
+
+These show sample data, not a live device.
+
+**Instrument cluster.** One tachometer per fan. The needle shows the PWM output, the yellow marker the curve's target, and the red zone starts at 85%. Fan 2 is getting its startup kick, so its needle sits at 100% above a 50% target.
+
+![Instrument cluster with four fan tachometers](screenshots/gauges.png)
+
+**Themes.** Pick one from the theme menu in the header. Auto follows your system: Redline in dark mode, Daylight in light mode.
+
+![The same fan gauge in the Redline, Amber dash, Nitro, Daylight and Type R themes](screenshots/themes.png)
+
+**Fan curve editor.** Drag the points to set PWM % against temperature. The dashed line marks the current temperature.
+
+![Fan curve editor](screenshots/curves.png)
+
+**On a phone.**
+
+<img src="screenshots/mobile.png" alt="Dashboard on a phone-width screen" width="300">
+
 ## Files
 
 - `firmware/ESP8266_PWM_To_Voltage_FanController/ESP8266_PWM_To_Voltage_FanController.ino`
@@ -21,6 +41,7 @@ The web UI still shows speed as percent, but in this version it means the PWM co
 - `web/app.js`
 - `docs/pwm_to_voltage_schematic.svg`
 - `docs/README.md`
+- `docs/screenshots/` (images used in this README)
 
 ## Firmware setup
 
